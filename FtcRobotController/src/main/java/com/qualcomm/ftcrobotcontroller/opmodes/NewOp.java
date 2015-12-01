@@ -83,6 +83,7 @@ public class NewOp extends OpMode {
          Right.setPower(0.0);
       }
       //print out ODS values to driver station
+
       telemetry.addData("Robot Data", "**********");
       telemetry.addData("ODO: %d", ODS.getLightDetected());
       telemetry.addData("ODO", "ODS:" + Double.toString(ODS.getLightDetected()));
