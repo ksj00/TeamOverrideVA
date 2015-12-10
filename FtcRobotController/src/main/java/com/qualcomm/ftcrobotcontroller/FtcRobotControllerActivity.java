@@ -40,6 +40,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.hardware.usb.UsbManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -53,6 +54,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.qualcomm.ftccommon.DbgLog;
 import com.qualcomm.ftccommon.FtcEventLoop;
 import com.qualcomm.ftccommon.FtcRobotControllerService;
@@ -61,12 +65,12 @@ import com.qualcomm.ftccommon.LaunchActivityConstantsList;
 import com.qualcomm.ftccommon.Restarter;
 import com.qualcomm.ftccommon.UpdateUI;
 import com.qualcomm.ftcrobotcontroller.opmodes.FtcOpModeRegister;
-import com.qualcomm.hardware.HardwareFactory;
 import com.qualcomm.robotcore.hardware.configuration.Utility;
 import com.qualcomm.robotcore.util.Dimmer;
 import com.qualcomm.robotcore.util.ImmersiveMode;
 import com.qualcomm.robotcore.util.RobotLog;
 import com.qualcomm.robotcore.wifi.WifiDirectAssistant;
+import com.qualcomm.hardware.HardwareFactory;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -102,6 +106,11 @@ public class FtcRobotControllerActivity extends Activity {
   protected FtcRobotControllerService controllerService;
 
   protected FtcEventLoop eventLoop;
+  /**
+   * ATTENTION: This was auto-generated to implement the App Indexing API.
+   * See https://g.co/AppIndexing/AndroidStudio for more information.
+   */
+  private GoogleApiClient client;
 
   protected class RobotRestarter implements Restarter {
 
@@ -165,7 +174,7 @@ public class FtcRobotControllerActivity extends Activity {
     updateUI = new UpdateUI(this, dimmer);
     updateUI.setRestarter(restarter);
     updateUI.setTextViews(textWifiDirectStatus, textRobotStatus,
-        textGamepad, textOpMode, textErrorMessage, textDeviceName);
+            textGamepad, textOpMode, textErrorMessage, textDeviceName);
     callback = updateUI.new Callback();
 
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -173,12 +182,20 @@ public class FtcRobotControllerActivity extends Activity {
 
     hittingMenuButtonBrightensScreen();
 
-    if (USE_DEVICE_EMULATION) { HardwareFactory.enableDeviceEmulation(); }
+    if (USE_DEVICE_EMULATION) {
+      HardwareFactory.enableDeviceEmulation();
+    }
+    // ATTENTION: This was auto-generated to implement the App Indexing API.
+    // See https://g.co/AppIndexing/AndroidStudio for more information.
+    client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
   }
 
   @Override
   protected void onStart() {
     super.onStart();
+    // ATTENTION: This was auto-generated to implement the App Indexing API.
+    // See https://g.co/AppIndexing/AndroidStudio for more information.
+    client.connect();
 
     // save 4MB of logcat to the SD card
     RobotLog.writeLogcatToDisk(this, 4 * 1024);
@@ -198,6 +215,19 @@ public class FtcRobotControllerActivity extends Activity {
       }
     });
 
+    // ATTENTION: This was auto-generated to implement the App Indexing API.
+    // See https://g.co/AppIndexing/AndroidStudio for more information.
+    Action viewAction = Action.newAction(
+            Action.TYPE_VIEW, // TODO: choose an action type.
+            "FtcRobotController Page", // TODO: Define a title for the content shown.
+            // TODO: If you have web page content that matches this app activity's content,
+            // make sure this auto-generated web page URL is correct.
+            // Otherwise, set the URL to null.
+            Uri.parse("http://host/path"),
+            // TODO: Make sure this auto-generated app deep link URI is correct.
+            Uri.parse("android-app://com.qualcomm.ftcrobotcontroller/http/host/path")
+    );
+    AppIndex.AppIndexApi.start(client, viewAction);
   }
 
   @Override
@@ -213,20 +243,37 @@ public class FtcRobotControllerActivity extends Activity {
   @Override
   protected void onStop() {
     super.onStop();
+    // ATTENTION: This was auto-generated to implement the App Indexing API.
+    // See https://g.co/AppIndexing/AndroidStudio for more information.
+    Action viewAction = Action.newAction(
+            Action.TYPE_VIEW, // TODO: choose an action type.
+            "FtcRobotController Page",
+           // TODO: Define a title for the content shown.
+            // TODO: If you have web page content that matches this app activity's content,
+            // make sure this auto-generated web page URL is correct.
+            // Otherwise, set the URL to null.
+            Uri.parse("http://host/path"),
+            // TODO: Make sure this auto-generated app deep link URI is correct.
+            Uri.parse("android-app://com.qualcomm.ftcrobotcontroller/http/host/path")
+    );
+    AppIndex.AppIndexApi.end(client, viewAction);
 
     if (controllerService != null) unbindService(connection);
 
     RobotLog.cancelWriteLogcatToDisk(this);
+    // ATTENTION: This was auto-generated to implement the App Indexing API.
+    // See https://g.co/AppIndexing/AndroidStudio for more information.
+    client.disconnect();
   }
 
   @Override
-  public void onWindowFocusChanged(boolean hasFocus){
+  public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
     // When the window loses focus (e.g., the action overflow is shown),
     // cancel any pending hide action. When the window gains focus,
     // hide the system UI.
     if (hasFocus) {
-      if (ImmersiveMode.apiOver19()){
+      if (ImmersiveMode.apiOver19()) {
         // Immersive flag only works on API 19 and above.
         immersion.hideSystemUI();
       }
@@ -315,16 +362,15 @@ public class FtcRobotControllerActivity extends Activity {
 
     FileInputStream fis = fileSetup();
     // if we can't find the file, don't try and build the robot.
-    if (fis == null) { return; }
-
-    HardwareFactory factory;
+    if (fis == null) {
+      return;
+    }
 
     // Modern Robotics Factory for use with Modern Robotics hardware
     HardwareFactory modernRoboticsFactory = new HardwareFactory(context);
     modernRoboticsFactory.setXmlInputStream(fis);
-    factory = modernRoboticsFactory;
 
-    eventLoop = new FtcEventLoop(factory, new FtcOpModeRegister(), callback, this);
+    eventLoop = new FtcEventLoop(modernRoboticsFactory, new FtcOpModeRegister(),callback, this);
 
     controllerService.setCallback(callback);
     controllerService.setupRobot(eventLoop);
@@ -333,7 +379,7 @@ public class FtcRobotControllerActivity extends Activity {
   private FileInputStream fileSetup() {
 
     final String filename = Utility.CONFIG_FILES_DIR
-        + utility.getFilenameFromPrefs(R.string.pref_hardware_config_filename, Utility.NO_FILE) + Utility.FILE_EXT;
+            + utility.getFilenameFromPrefs(R.string.pref_hardware_config_filename, Utility.NO_FILE) + Utility.FILE_EXT;
 
     FileInputStream fis;
     try {
